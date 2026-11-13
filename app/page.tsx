@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnalyticsBeacon } from "@/components/AnalyticsBeacon";
 import { BeforeAfter } from "@/components/BeforeAfter";
 import { FAQ } from "@/components/FAQ";
 import { HeroPortrait } from "@/components/HeroPortrait";
@@ -6,6 +7,7 @@ import { HeroPortrait } from "@/components/HeroPortrait";
 export default function HomePage() {
   return (
     <div>
+      <AnalyticsBeacon name="view_home" />
       {/* Hero — one composition: brand + H1 + support + CTA + full-bleed portrait */}
       <section className="relative overflow-hidden border-b border-soft">
         <div
