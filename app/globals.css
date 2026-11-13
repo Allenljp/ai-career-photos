@@ -3,16 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0b0f19;
-  --accent: #4d7cfe;
-  --accent-hover: #3b6aef;
-  --surface: #f7f8fa;
-  --border: rgba(0, 0, 0, 0.08);
+  --ink: #12151a;
+  --ink-soft: #3a414c;
+  --muted: #6b7380;
+  --paper: #f3f5f7;
+  --surface: #e8ecf0;
+  --line: rgba(18, 21, 26, 0.1);
+  --accent: #0e6b66;
+  --accent-hover: #0a5551;
+  --accent-soft: #d5e8e6;
+  --studio: #c5ced6;
+  --studio-deep: #8a96a3;
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
-  --muted: #5b6475;
-  --background: #ffffff;
+  --background: var(--paper);
   --foreground: var(--ink);
 }
 
@@ -24,5 +29,63 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Fine grain for studio atmosphere */
+.studio-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: translateX(16px) scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-hero-rise {
+  animation: hero-rise 0.65s ease-out both;
+}
+
+.animate-hero-rise-delay {
+  animation: hero-rise 0.65s ease-out 0.08s both;
+}
+
+.animate-hero-rise-delay-2 {
+  animation: hero-rise 0.65s ease-out 0.16s both;
+}
+
+.animate-hero-portrait {
+  animation: hero-fade 0.75s ease-out 0.12s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-rise,
+  .animate-hero-rise-delay,
+  .animate-hero-rise-delay-2,
+  .animate-hero-portrait {
+    animation: none;
   }
 }

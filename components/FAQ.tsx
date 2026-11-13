@@ -5,11 +5,11 @@ import { useState } from "react";
 const ITEMS = [
   {
     q: "Will it look like me?",
-    a: "We train a private model on your photos and score every result for likeness. If we can't produce usable results, we refund automatically.",
+    a: "We build a private model from your photos and score every result for likeness. You see a free preview first — so you can judge before paying.",
   },
   {
     q: "What do I get for $29?",
-    a: "40 headshots in 4K, your choice of 4 final images, and a PDF with 3 bios, 3 interview openers, and 10 keywords for your target role.",
+    a: "40 headshots in 4K, your choice of 4 finals, and a PDF with 3 bios, 3 interview openers, and 10 keywords for your target role. No subscription.",
   },
   {
     q: "Do you keep my photos?",
@@ -20,12 +20,12 @@ const ITEMS = [
     a: "The free preview takes a few minutes. The full set is usually ready in 3–8 minutes after payment.",
   },
   {
-    q: "What if I don't like the result?",
-    a: "You get one free redo. We refund only when generation fails.",
+    q: "What if I’m not happy with the set?",
+    a: "You get one free redo. We only issue a refund when generation fails — not for preference.",
   },
   {
     q: "Can I use them on LinkedIn?",
-    a: "Yes — a personal, commercial-use license for your own profiles and resumes.",
+    a: "Yes. You get a personal commercial-use license for your own profiles and resumes.",
   },
 ];
 
@@ -33,14 +33,14 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <div className="divide-y divide-[rgba(0,0,0,0.08)] rounded-2xl border border-soft bg-white">
+    <div className="divide-y divide-[rgba(18,21,26,0.10)] border-y border-soft">
       {ITEMS.map((item, i) => {
         const isOpen = open === i;
         return (
           <div key={item.q}>
             <button
               type="button"
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              className="flex w-full items-center justify-between gap-4 py-5 text-left"
               aria-expanded={isOpen}
               onClick={() => setOpen(isOpen ? null : i)}
             >
@@ -50,7 +50,7 @@ export function FAQ() {
               </span>
             </button>
             {isOpen ? (
-              <p className="px-5 pb-4 text-sm leading-relaxed text-muted">{item.a}</p>
+              <p className="pb-5 text-sm leading-relaxed text-ink-soft">{item.a}</p>
             ) : null}
           </div>
         );
