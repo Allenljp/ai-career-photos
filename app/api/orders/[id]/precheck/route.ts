@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  assertOrderAccess,
+  unauthorizedOrderResponse,
+} from "@/lib/auth";
+import {
   createUpload,
   getOrder,
   listUploads,
@@ -13,6 +17,9 @@ type Ctx = { params: { id: string } };
 
 /** POST /api/orders/:id/precheck — {keys[]} → {ok, perFile[]} */
 export async function POST(request: Request, { params }: Ctx) {
+  if (!assertOrderAccess(request, params.id)) {
+    return unauthorizedOrderResponse();
+  }
   const order = await getOrder(params.id);
   if (!order) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -25,6 +32,19 @@ export async function POST(request: Request, { params }: Ctx) {
       { error: "Upload 8–10 photos for precheck." },
       { status: 400 },
     );
+  }
+
+  for (const key of keys) {
+    if (
+      typeof key !== "string" ||
+      !key.startsWith(`uploads/${params.id}/`) ||
+      key.includes("..")
+    ) {
+      return NextResponse.json(
+        { error: "Upload keys must belong to this order." },
+        { status: 403 },
+      );
+    }
   }
 
   const result = await precheckUploads(keys);

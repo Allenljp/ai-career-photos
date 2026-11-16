@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { trackClient } from "@/lib/track-client";
+import { orderAuthHeaders, trackClient } from "@/lib/track-client";
 
 type OrderPayload = {
   orderId: string;
@@ -31,7 +31,9 @@ export default function PreviewPage({
 
     async function load() {
       try {
-        const res = await fetch(`/api/orders/${orderId}`);
+        const res = await fetch(`/api/orders/${orderId}`, {
+          headers: { ...orderAuthHeaders(orderId) },
+        });
         const json = await res.json();
         if (!res.ok) {
           throw new Error(json?.error || "Order not found");

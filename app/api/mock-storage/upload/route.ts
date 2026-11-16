@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server";
+import { verifySignedStorageRequest } from "@/lib/auth";
 import { putObject } from "@/lib/r2";
 
-/** PUT /api/mock-storage/upload?key=... — mock R2 signed upload */
+/** PUT /api/mock-storage/upload?key=&orderId=&exp=&sig= — signed order-bound upload */
 export async function PUT(request: Request) {
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
-  if (!key || key.includes("..")) {
-    return NextResponse.json({ error: "invalid key" }, { status: 400 });
+  const orderId = url.searchParams.get("orderId");
+  const exp = url.searchParams.get("exp");
+  const sig = url.searchParams.get("sig");
+
+  const verified = verifySignedStorageRequest({
+    method: "PUT",
+    key: key || "",
+    orderId,
+    exp,
+    sig,
+  });
+  if (!verified.ok) {
+    return NextResponse.json(
+      { error: verified.error },
+      { status: verified.status },
+    );
   }
 
   const ab = await request.arrayBuffer();
@@ -21,8 +36,9 @@ export async function PUT(request: Request) {
     );
   }
 
-  const contentType = request.headers.get("content-type") || "application/octet-stream";
-  await putObject(key, buf, contentType);
+  const contentType =
+    request.headers.get("content-type") || "application/octet-stream";
+  await putObject(key!, buf, contentType);
   return NextResponse.json({ ok: true, key, bytes: buf.byteLength });
 }
 

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getOrCreateFingerprint,
+  orderAuthHeaders,
+  saveOrderAccessToken,
   trackClient,
 } from "@/lib/track-client";
 
@@ -131,11 +133,20 @@ export default function UploadPage() {
         );
       }
       const orderId = orderJson.orderId as string;
+      const accessToken = orderJson.accessToken as string | undefined;
+      if (!accessToken) {
+        throw new Error("Could not authorize this order. Try again.");
+      }
+      saveOrderAccessToken(orderId, accessToken);
+      const authHeaders = orderAuthHeaders(orderId);
 
       const signRes = await fetch("/api/uploads/sign", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: files.length }),
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify({ count: files.length, orderId }),
       });
       const signed = await signRes.json();
       if (!signRes.ok) {
@@ -167,7 +178,10 @@ export default function UploadPage() {
 
       const preRes = await fetch(`/api/orders/${orderId}/precheck`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
         body: JSON.stringify({ keys }),
       });
       const preJson = await preRes.json();
@@ -196,6 +210,7 @@ export default function UploadPage() {
 
       const previewRes = await fetch(`/api/orders/${orderId}/preview`, {
         method: "POST",
+        headers: { ...authHeaders },
       });
       const previewJson = await previewRes.json();
       if (!previewRes.ok) {

@@ -7,6 +7,17 @@ export function siteUrl() {
   );
 }
 
+/**
+ * Demo/test mode: allow repeated free previews (no 1× email/IP/device cap).
+ * Defaults ON for MVP test hosting; set DEMO_MODE=0 before real launch.
+ */
+export function isDemoMode() {
+  const raw = process.env.DEMO_MODE;
+  if (raw == null || raw === "") return true;
+  const v = raw.toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 export function isSupabaseConfigured() {
   return Boolean(
     process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,

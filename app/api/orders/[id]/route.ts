@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
+import {
+  assertOrderAccess,
+  unauthorizedOrderResponse,
+} from "@/lib/auth";
 import { deleteOrder, getOrder, updateOrder } from "@/lib/db";
 import { scoreExplanation } from "@/lib/pipeline/score";
 
 type Ctx = { params: { id: string } };
 
 /** GET /api/orders/:id → {status, previewUrl?, score?} */
-export async function GET(_request: Request, { params }: Ctx) {
+export async function GET(request: Request, { params }: Ctx) {
+  if (!assertOrderAccess(request, params.id)) {
+    return unauthorizedOrderResponse();
+  }
   const order = await getOrder(params.id);
   if (!order) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -27,6 +34,9 @@ export async function GET(_request: Request, { params }: Ctx) {
 
 /** PATCH /api/orders/:id — attach email (preview page) */
 export async function PATCH(request: Request, { params }: Ctx) {
+  if (!assertOrderAccess(request, params.id)) {
+    return unauthorizedOrderResponse();
+  }
   const order = await getOrder(params.id);
   if (!order) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -44,7 +54,10 @@ export async function PATCH(request: Request, { params }: Ctx) {
 }
 
 /** DELETE /api/orders/:id → 204 (GDPR) */
-export async function DELETE(_request: Request, { params }: Ctx) {
+export async function DELETE(request: Request, { params }: Ctx) {
+  if (!assertOrderAccess(request, params.id)) {
+    return unauthorizedOrderResponse();
+  }
   await deleteOrder(params.id);
   return new NextResponse(null, { status: 204 });
 }

@@ -20,6 +20,8 @@ type MemoryStore = {
   rateLimits: Map<string, RateLimitRow>;
   /** key → absolute file path or buffer marker */
   files: Map<string, Buffer>;
+  /** orderId → access token (proof of ownership) */
+  orderTokens: Map<string, string>;
   eventSeq: number;
 };
 
@@ -35,8 +37,13 @@ export function getMemoryStore(): MemoryStore {
       events: [],
       rateLimits: new Map(),
       files: new Map(),
+      orderTokens: new Map(),
       eventSeq: 1,
     };
+  }
+  // Hot-reload safety for stores created before orderTokens existed.
+  if (!g.__aiCareerStore.orderTokens) {
+    g.__aiCareerStore.orderTokens = new Map();
   }
   return g.__aiCareerStore;
 }

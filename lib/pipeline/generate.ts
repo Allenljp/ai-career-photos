@@ -61,7 +61,7 @@ export async function generateHeadshots(
     await putObject(previewKey, watermarked, "image/jpeg");
 
     const score = scorePreview(generated.similarity, generated.sharpness);
-    const previewUrl = publicUrlForKey(previewKey);
+    const previewUrl = publicUrlForKey(previewKey, orderId);
     const tip = bioTipForRole(order.target_role);
 
     await createAsset({

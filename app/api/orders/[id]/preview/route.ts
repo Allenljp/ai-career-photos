@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  assertOrderAccess,
+  unauthorizedOrderResponse,
+} from "@/lib/auth";
 import { createJob, getOrder, listUploads } from "@/lib/db";
 import { imageProviderName } from "@/lib/env";
 import { track } from "@/lib/ls";
@@ -13,6 +17,9 @@ type Ctx = { params: { id: string } };
 
 /** POST /api/orders/:id/preview → {jobId} — 1 free preview per fingerprint */
 export async function POST(request: Request, { params }: Ctx) {
+  if (!assertOrderAccess(request, params.id)) {
+    return unauthorizedOrderResponse();
+  }
   const order = await getOrder(params.id);
   if (!order) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -59,7 +66,6 @@ export async function POST(request: Request, { params }: Ctx) {
   await track("preview_queued", { jobId: job.id, provider }, params.id);
 
   // 假设: mock / local runs the job inline so demos don't need cron.
-  // Cron /api/cron/tick still drains queued jobs for the real provider path.
   try {
     await runJob(job.id, ip);
   } catch (err) {
