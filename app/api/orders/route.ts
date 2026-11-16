@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { issueOrderAccessToken } from "@/lib/auth";
 import { createOrder } from "@/lib/db";
 import { track } from "@/lib/ls";
 import {
@@ -7,7 +8,7 @@ import {
 } from "@/lib/rate-limit";
 import { clientIpFromHeaders } from "@/lib/request";
 
-/** POST /api/orders — {email, targetRole, style, fingerprint} → {orderId} */
+/** POST /api/orders — {email, targetRole, style, fingerprint} → {orderId, accessToken} */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const email =
@@ -49,7 +50,9 @@ export async function POST(request: Request) {
     utm: body?.utm && typeof body.utm === "object" ? body.utm : null,
   });
 
+  const accessToken = issueOrderAccessToken(order.id);
+
   await track("order_created", { email, targetRole }, order.id);
 
-  return NextResponse.json({ orderId: order.id });
+  return NextResponse.json({ orderId: order.id, accessToken });
 }

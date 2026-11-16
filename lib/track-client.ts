@@ -26,6 +26,30 @@ export function trackClient(
 }
 
 const FP_KEY = "ach_fingerprint";
+const ORDER_TOKEN_PREFIX = "ach_order_token_";
+
+export function saveOrderAccessToken(orderId: string, token: string) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(`${ORDER_TOKEN_PREFIX}${orderId}`, token);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function loadOrderAccessToken(orderId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(`${ORDER_TOKEN_PREFIX}${orderId}`);
+  } catch {
+    return null;
+  }
+}
+
+export function orderAuthHeaders(orderId: string): HeadersInit {
+  const token = loadOrderAccessToken(orderId);
+  return token ? { "x-order-token": token } : {};
+}
 
 /** Stable device fingerprint for free-tier rate limit (local UUID + UA hash). */
 export function getOrCreateFingerprint(): string {

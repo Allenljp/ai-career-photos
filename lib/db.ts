@@ -83,7 +83,15 @@ export async function updateOrder(
 
 export async function deleteOrder(id: string): Promise<void> {
   const store = getMemoryStore();
+  const uploadKeys = Array.from(store.uploads.values())
+    .filter((u) => u.order_id === id)
+    .map((u) => u.r2_key);
+  const assetKeys = Array.from(store.assets.values())
+    .filter((a) => a.order_id === id)
+    .map((a) => a.r2_key);
+
   store.orders.delete(id);
+  store.orderTokens.delete(id);
   Array.from(store.uploads.entries()).forEach(([uid, u]) => {
     if (u.order_id === id) store.uploads.delete(uid);
   });
@@ -93,6 +101,15 @@ export async function deleteOrder(id: string): Promise<void> {
   Array.from(store.assets.entries()).forEach(([aid, a]) => {
     if (a.order_id === id) store.assets.delete(aid);
   });
+  for (const key of [...uploadKeys, ...assetKeys]) {
+    store.files.delete(key);
+  }
+  // Also drop any leftover preview objects for this order.
+  for (const key of Array.from(store.files.keys())) {
+    if (key.startsWith(`previews/${id}/`) || key.startsWith(`uploads/${id}/`)) {
+      store.files.delete(key);
+    }
+  }
 }
 
 export async function createUpload(input: {

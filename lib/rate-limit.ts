@@ -1,3 +1,4 @@
+import { isDemoMode } from "@/lib/env";
 import { getMemoryStore } from "@/lib/store";
 import type { RateLimitRow } from "@/lib/types";
 
@@ -15,8 +16,10 @@ function freeKey(kind: "email" | "ip" | "fingerprint", value: string) {
 /**
  * Free tier: 1 preview per email / IP / fingerprint (lifetime for MVP).
  * Returns true if the key may still claim a free preview.
+ * DEMO_MODE=1 skips the cap so Allen can retest repeatedly.
  */
 export async function checkFreePreviewLimit(key: string): Promise<boolean> {
+  if (isDemoMode()) return true;
   const row = getMemoryStore().rateLimits.get(key);
   if (!row) return true;
   return row.count < 1;
@@ -27,6 +30,8 @@ export async function hasClaimedFreePreview(opts: {
   ip?: string | null;
   fingerprint?: string | null;
 }): Promise<{ blocked: boolean; reason?: string }> {
+  if (isDemoMode()) return { blocked: false };
+
   const checks: { kind: "email" | "ip" | "fingerprint"; value: string }[] = [];
   if (opts.email) checks.push({ kind: "email", value: opts.email });
   if (opts.ip) checks.push({ kind: "ip", value: opts.ip });
@@ -48,6 +53,8 @@ export async function claimFreePreview(opts: {
   ip?: string | null;
   fingerprint?: string | null;
 }): Promise<void> {
+  if (isDemoMode()) return;
+
   const store = getMemoryStore();
   const bump = (kind: "email" | "ip" | "fingerprint", value: string) => {
     const key = freeKey(kind, value);
