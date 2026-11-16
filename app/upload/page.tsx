@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getOrCreateFingerprint,
@@ -25,21 +25,36 @@ type PrecheckFile = {
   reason?: string;
 };
 
+type SelectedPhoto = {
+  file: File;
+  url: string;
+};
+
 export default function UploadPage() {
   const router = useRouter();
-  const [files, setFiles] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
   const [role, setRole] = useState("Professional");
   const [consent, setConsent] = useState(false);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [precheck, setPrecheck] = useState<PrecheckFile[] | null>(null);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
 
   useEffect(() => {
     trackClient("start_upload");
   }, []);
 
-  const count = files.length;
+  // Revoke remaining object URLs on unmount (create/revoke also paired with pick/remove).
+  useEffect(() => {
+    return () => {
+      for (const p of photosRef.current) URL.revokeObjectURL(p.url);
+    };
+  }, []);
+
+  const files = useMemo(() => photos.map((p) => p.file), [photos]);
+  const count = photos.length;
   const needed = Math.max(0, 8 - count);
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const canContinue =
@@ -71,12 +86,22 @@ export default function UploadPage() {
     }
     setError(null);
     setPrecheck(null);
-    const next = [...files, ...incoming].slice(0, 10);
-    setFiles(next);
+    setPhotos((prev) => {
+      const room = Math.max(0, 10 - prev.length);
+      const added = incoming.slice(0, room).map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      }));
+      return [...prev, ...added];
+    });
   }
 
   function removeAt(index: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotos((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((_, i) => i !== index);
+    });
     setPrecheck(null);
   }
 
@@ -243,33 +268,42 @@ export default function UploadPage() {
 
       <p className="mt-4 text-sm text-muted">{hint}</p>
 
-      {files.length > 0 ? (
-        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {files.map((file, i) => {
+      {photos.length > 0 ? (
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {photos.map((photo, i) => {
             const check = precheck?.[i];
             return (
               <li
-                key={`${file.name}-${file.size}-${i}`}
-                className="flex flex-col gap-1 rounded-xl border border-soft bg-surface px-3 py-2 text-sm"
+                key={`${photo.file.name}-${photo.file.size}-${photo.url}`}
+                className="relative overflow-hidden rounded-xl border border-soft bg-surface"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-ink">{file.name}</span>
+                <div className="relative aspect-square bg-white">
+                  {/* Object URLs are not remote assets — img is correct here. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={`Selected photo ${i + 1}`}
+                    className="h-full w-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => removeAt(i)}
-                    className="shrink-0 text-muted hover:text-danger"
+                    aria-label={`Remove photo ${i + 1}`}
+                    className="absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-ink/75 text-sm text-white hover:bg-danger"
                   >
-                    Remove
+                    ×
                   </button>
                 </div>
                 {check ? (
-                  <span
+                  <p
                     className={
-                      check.ok ? "text-xs text-success" : "text-xs text-danger"
+                      check.ok
+                        ? "px-2 py-1.5 text-xs text-success"
+                        : "px-2 py-1.5 text-xs text-danger"
                     }
                   >
                     {check.ok ? "✔ Clear face" : `✖ ${check.reason || "Failed"}`}
-                  </span>
+                  </p>
                 ) : null}
               </li>
             );

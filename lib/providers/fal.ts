@@ -9,7 +9,8 @@ import type {
 /**
  * fal.ai provider shell.
  * Real flux-lora-fast-training + Flux inference needs FAL_KEY (D2).
- * D1 falls back to mock when the key is missing.
+ * Until then (and whenever FAL_KEY is missing) we run the mock studio
+ * headshot treatment so previews never look like a watermarked selfie.
  */
 export const falProvider: ImageProvider = {
   name: "fal",
@@ -23,7 +24,7 @@ export const falProvider: ImageProvider = {
     }
 
     // 假设: full LoRA train + infer is D2; with FAL_KEY present we still use
-    // mock image path until fal SDK + training queue is wired, but mark provider.
+    // the studio-mock path until fal SDK + training queue is wired.
     const result = await mockProvider.generatePreview(input);
     return {
       ...result,
